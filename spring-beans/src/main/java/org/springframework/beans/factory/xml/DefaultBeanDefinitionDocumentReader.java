@@ -324,6 +324,11 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		BeanDefinitionHolder bdHolder = delegate.parseBeanDefinitionElement(ele);// 解析xml中bean的标签元素 如：class、name、id、alias
 		if (bdHolder != null) {
 			bdHolder = delegate.decorateBeanDefinitionIfRequired(ele, bdHolder);// 默认标签下的子节点含有自定义属性，再次解析
+			/** 例： bean中的属性子标签是自定义的配置
+			 * 	<bean id="test" class="test.MyClass">
+			 * 	    <mybean:user username="aaa"/>
+			 * 	</bean>
+			 */
 			try {
 				// Register the final decorated instance. 解析完，注册 委托给BeanDefinitionReaderUtils.registerBeanDefinition()
 				BeanDefinitionReaderUtils.registerBeanDefinition(bdHolder, getReaderContext().getRegistry());

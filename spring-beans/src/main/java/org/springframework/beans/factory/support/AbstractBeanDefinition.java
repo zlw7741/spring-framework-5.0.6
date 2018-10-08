@@ -141,11 +141,11 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	private volatile Object beanClass;
 
 	@Nullable
-	private String scope = SCOPE_DEFAULT;
+	private String scope = SCOPE_DEFAULT; // bean的作用范围，对应bean属性scope
 
 	private boolean abstractFlag = false;
 
-	private boolean lazyInit = false;
+	private boolean lazyInit = false; // 懒加载
 
 	private int autowireMode = AUTOWIRE_NO;
 
