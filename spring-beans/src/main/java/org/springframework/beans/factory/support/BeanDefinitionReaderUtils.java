@@ -165,9 +165,9 @@ public abstract class BeanDefinitionReaderUtils {
 
 		// Register bean definition under primary name. 使用beanName 做唯一标识注册
 		String beanName = definitionHolder.getBeanName();
-		registry.registerBeanDefinition(beanName, definitionHolder.getBeanDefinition()); // 通过beanName注册
+		registry.registerBeanDefinition(beanName, definitionHolder.getBeanDefinition()); // 1. 通过beanName注册BeanDefinition
 
-		// Register aliases for bean name, if any. 通过别名注册
+		// Register aliases for bean name, if any. 2. 通 过别名 注册BeanDefinition
 		String[] aliases = definitionHolder.getAliases();
 		if (aliases != null) {
 			for (String alias : aliases) {

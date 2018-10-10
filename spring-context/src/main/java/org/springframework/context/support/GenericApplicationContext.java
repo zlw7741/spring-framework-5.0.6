@@ -338,7 +338,7 @@ public class GenericApplicationContext extends AbstractApplicationContext implem
 		return this.beanFactory.isBeanNameInUse(beanName);
 	}
 
-	@Override
+	@Override // 2. 通 过别名 注册BeanDefinition
 	public void registerAlias(String beanName, String alias) {
 		this.beanFactory.registerAlias(beanName, alias);
 	}

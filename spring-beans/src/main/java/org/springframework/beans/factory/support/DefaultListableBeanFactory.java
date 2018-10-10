@@ -892,7 +892,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		BeanDefinition existingDefinition = this.beanDefinitionMap.get(beanName);
 		if (existingDefinition != null) { // 处理注册已经注册的beanName
-			if (!isAllowBeanDefinitionOverriding()) {
+			if (!isAllowBeanDefinitionOverriding()) { // 如果对应的beanName已经注册切在配置中心配置了bean不允许被覆盖，则抛出异常
 				throw new BeanDefinitionOverrideException(beanName, beanDefinition, existingDefinition);
 			}
 			else if (existingDefinition.getRole() < beanDefinition.getRole()) {
@@ -903,7 +903,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 							existingDefinition + "] with [" + beanDefinition + "]");
 				}
 			}
-			else if (!beanDefinition.equals(existingDefinition)) {
+			else if (!beanDefinition.equals(existingDefinition)) {// 新注入的bean的定义，和旧的不相等
 				if (logger.isDebugEnabled()) {
 					logger.debug("Overriding bean definition for bean '" + beanName +
 							"' with a different definition: replacing [" + existingDefinition +
@@ -919,8 +919,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			}
 			this.beanDefinitionMap.put(beanName, beanDefinition);
 		}
-		else {
-			if (hasBeanCreationStarted()) {
+		else { // 否则之前没有定义过同名的bean
+			if (hasBeanCreationStarted()) {  // 判断BeanFactory中的Bean的创建阶段是否已经开始，如果已经开始
 				// Cannot modify startup-time collection elements anymore (for stable iteration)
 				synchronized (this.beanDefinitionMap) {
 					this.beanDefinitionMap.put(beanName, beanDefinition);
@@ -936,16 +936,16 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				}
 			}
 			else {
-				// Still in startup registration phase
-				this.beanDefinitionMap.put(beanName, beanDefinition);
-				this.beanDefinitionNames.add(beanName);
+				// Still in startup registration phase 注册beanDefinition
+				this.beanDefinitionMap.put(beanName, beanDefinition);// 直接在维护列表中加入新注册的beanDefinition
+				this.beanDefinitionNames.add(beanName); // 记录beanName
 				this.manualSingletonNames.remove(beanName);
 			}
 			this.frozenBeanDefinitionNames = null;
 		}
 
-		if (existingDefinition != null || containsSingleton(beanName)) {
-			resetBeanDefinition(beanName);
+		if (existingDefinition != null || containsSingleton(beanName)) { // 如果有同名的bean
+			resetBeanDefinition(beanName); // 重置所有beanName对应的缓存
 		}
 	}
 
