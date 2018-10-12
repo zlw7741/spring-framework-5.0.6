@@ -200,11 +200,11 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * @param delegate
 	 */
 	private void parseDefaultElement(Element ele, BeanDefinitionParserDelegate delegate) {
-		// 标签 import
+		// 标签 import （导入其他配置文件，使其配置文件统一管理） <import resource="systemContext.xml"/>
 		if (delegate.nodeNameEquals(ele, IMPORT_ELEMENT)) {
 			importBeanDefinitionResource(ele);
 		}
-		// 标签 alias
+		// 标签 alias (给bean设置别名)
 		else if (delegate.nodeNameEquals(ele, ALIAS_ELEMENT)) {
 			processAliasRegistration(ele);
 		}
@@ -222,20 +222,21 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	/**
 	 * Parse an "import" element and load the bean definitions
 	 * from the given resource into the bean factory.
+	 * 标签 import （导入其他配置文件，使其配置文件统一管理） <import resource="systemContext.xml"/>
 	 */
 	protected void importBeanDefinitionResource(Element ele) {
-		String location = ele.getAttribute(RESOURCE_ATTRIBUTE);
+		String location = ele.getAttribute(RESOURCE_ATTRIBUTE); // 获取resource属性表示的路径
 		if (!StringUtils.hasText(location)) {
 			getReaderContext().error("Resource location must not be empty", ele);
 			return;
 		}
 
-		// Resolve system properties: e.g. "${user.dir}"
+		// Resolve system properties: e.g. "${user.dir}" 解析路径中的系统属性 格式"${user.dir}"
 		location = getReaderContext().getEnvironment().resolveRequiredPlaceholders(location);
 
 		Set<Resource> actualResources = new LinkedHashSet<>(4);
 
-		// Discover whether the location is an absolute or relative URI
+		// Discover whether the location is an absolute or relative URI 判断location是决对uri还是相对uri
 		boolean absoluteLocation = false;
 		try {
 			absoluteLocation = ResourcePatternUtils.isUrl(location) || ResourceUtils.toURI(location).isAbsolute();
@@ -245,9 +246,9 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			// unless it is the well-known Spring prefix "classpath*:"
 		}
 
-		// Absolute or relative?
-		if (absoluteLocation) {
-			try {
+		// Absolute or relative? 判断location的是绝对的还是相对路径？
+		if (absoluteLocation) { // 绝对
+			try { // 如果是绝对路径则计算出绝对路径并进行解析
 				int importCount = getReaderContext().getReader().loadBeanDefinitions(location, actualResources);
 				if (logger.isTraceEnabled()) {
 					logger.trace("Imported " + importCount + " bean definitions from URL location [" + location + "]");
@@ -258,16 +259,19 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 						"Failed to import bean definitions from URL location [" + location + "]", ele, ex);
 			}
 		}
-		else {
+		else { // 相对
 			// No URL -> considering resource location as relative to the current file.
-			try {
+			try { // 如果是相对地址，根据相对地址计算出绝对地址
 				int importCount;
+				// Resource存在多个子实现类，如 VfsResource、fileSystemResource等，
+				// 每个resource的createRelative的方式实现都不一样，所以先使用子类的方法尝试解析
 				Resource relativeResource = getReaderContext().getResource().createRelative(location);
 				if (relativeResource.exists()) {
 					importCount = getReaderContext().getReader().loadBeanDefinitions(relativeResource);
 					actualResources.add(relativeResource);
 				}
 				else {
+					//如果解析不成功，则使用默认的解析器 ResourcePatternResolver进行解析
 					String baseLocation = getReaderContext().getResource().getURL().toString();
 					importCount = getReaderContext().getReader().loadBeanDefinitions(
 							StringUtils.applyRelativePath(baseLocation, location), actualResources);
@@ -284,16 +288,18 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 						"Failed to import bean definitions from relative location [" + location + "]", ele, ex);
 			}
 		}
+		// 解析后进行监听器激活处理
 		Resource[] actResArray = actualResources.toArray(new Resource[0]);
 		getReaderContext().fireImportProcessed(location, actResArray, extractSource(ele));
 	}
 
 	/**
 	 * Process the given alias element, registering the alias with the registry.
+	 *   标签 alias (给bean设置别名)
 	 */
 	protected void processAliasRegistration(Element ele) {
-		String name = ele.getAttribute(NAME_ATTRIBUTE);
-		String alias = ele.getAttribute(ALIAS_ATTRIBUTE);
+		String name = ele.getAttribute(NAME_ATTRIBUTE); // 获取beanName
+		String alias = ele.getAttribute(ALIAS_ATTRIBUTE); // 获取 alias
 		boolean valid = true;
 		if (!StringUtils.hasText(name)) {
 			getReaderContext().error("Name must not be empty", ele);
@@ -305,12 +311,13 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		}
 		if (valid) {
 			try {
-				getReaderContext().getRegistry().registerAlias(name, alias);
+				getReaderContext().getRegistry().registerAlias(name, alias);// 注册bean
 			}
 			catch (Exception ex) {
 				getReaderContext().error("Failed to register alias '" + alias +
 						"' for bean with name '" + name + "'", ele, ex);
 			}
+			// 别名注册后通知监听器做相应处理
 			getReaderContext().fireAliasRegistered(name, alias, extractSource(ele));
 		}
 	}
